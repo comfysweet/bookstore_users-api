@@ -26,7 +26,6 @@ var (
 func init() {
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?", username, password, host, schema)
 	var err error
-	//Client, err = sql.Open("mysql", "root:pass@tcp(docker.for.mac.host.internal:3306)/users_db")
 
 	Client, err = sql.Open("mysql", dataSourceName)
 	if err != nil {
