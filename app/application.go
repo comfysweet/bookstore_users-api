@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/comfysweet/bookstore_users-api/logger"
+	"github.com/comfysweet/bookstore_utils-go/logger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,5 +13,5 @@ func StartApplication() {
 	mapUrls()
 
 	logger.Info("application has been started")
-	router.Run(":8080")
+	router.Run(":8081")
 }

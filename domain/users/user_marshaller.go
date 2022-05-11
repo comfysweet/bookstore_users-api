@@ -2,7 +2,7 @@ package users
 
 import (
 	"encoding/json"
-	"github.com/comfysweet/bookstore_users-api/utils/errors"
+	"github.com/comfysweet/bookstore_utils-go/errors"
 )
 
 type PublicUser struct {
@@ -38,11 +38,11 @@ func (user *User) Marshal(isPublic bool) interface{} {
 	}
 	userJson, err := json.Marshal(user)
 	if err != nil {
-		return errors.NewInternalServiceError("marshal json error")
+		return errors.NewInternalServiceError("marshal json error", errors.NewError("internal service error"))
 	}
 	var privateUser PrivateUser
 	if err := json.Unmarshal(userJson, &privateUser); err != nil {
-		return errors.NewInternalServiceError("unmarshal json error")
+		return errors.NewInternalServiceError("unmarshal json error", errors.NewError("internal service error"))
 	}
 	return privateUser
 }

@@ -1,9 +1,10 @@
 package users
 
 import (
+	"github.com/comfysweet/bookstore-oauth-go/oauth"
 	"github.com/comfysweet/bookstore_users-api/domain/users"
 	"github.com/comfysweet/bookstore_users-api/services"
-	"github.com/comfysweet/bookstore_users-api/utils/errors"
+	"github.com/comfysweet/bookstore_utils-go/errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -29,10 +30,24 @@ func Create(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	c.JSON(http.StatusCreated, result.Marshal(c.GetHeader("X-Public") == "true"))
+	c.JSON(http.StatusCreated, result.Marshal(oauth.IsPublic(c.Request)))
 }
 
 func Get(c *gin.Context) {
+	if err := oauth.AuthenticateRequest(c.Request); err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	if callerId := oauth.GetCallerId(c.Request); callerId == 0 {
+		err := errors.RestErr{
+			Message: "resource nor available",
+			Status:  http.StatusUnauthorized,
+		}
+		c.JSON(err.Status, err)
+		return
+	}
+
 	userId, userErr := getUserId(c.Param("user_id"))
 	if userErr != nil {
 		c.JSON(userErr.Status, userErr)
@@ -43,7 +58,12 @@ func Get(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	c.JSON(http.StatusOK, user.Marshal(c.GetHeader("X-Public") == "true"))
+
+	if oauth.GetCallerId(c.Request) == user.Id {
+		c.JSON(http.StatusOK, user.Marshal(false))
+		return
+	}
+	c.JSON(http.StatusOK, user.Marshal(oauth.IsPublic(c.Request)))
 }
 
 func Update(c *gin.Context) {
@@ -68,7 +88,7 @@ func Update(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	c.JSON(http.StatusOK, result.Marshal(c.GetHeader("X-Public") == "true"))
+	c.JSON(http.StatusOK, result.Marshal(oauth.IsPublic(c.Request)))
 }
 
 func Delete(c *gin.Context) {
@@ -91,5 +111,20 @@ func Search(c *gin.Context) {
 		c.JSON(err.Status, err)
 		return
 	}
-	c.JSON(http.StatusOK, result.Marshal(c.GetHeader("X-Public") == "true"))
+	c.JSON(http.StatusOK, result.Marshal(oauth.IsPublic(c.Request)))
+}
+
+func Login(c *gin.Context) {
+	var request users.LoginRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		restErr := errors.NewBadRequestError("invalid json body")
+		c.JSON(restErr.Status, restErr)
+		return
+	}
+	user, err := services.UserService.LoginUser(request)
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusCreated, user.Marshal(oauth.IsPublic(c.Request)))
 }

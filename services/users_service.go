@@ -4,7 +4,7 @@ import (
 	"github.com/comfysweet/bookstore_users-api/domain/users"
 	"github.com/comfysweet/bookstore_users-api/utils/crypto_utils"
 	"github.com/comfysweet/bookstore_users-api/utils/date_utils"
-	"github.com/comfysweet/bookstore_users-api/utils/errors"
+	"github.com/comfysweet/bookstore_utils-go/errors"
 )
 
 var UserService userServiceInterface = &userService{}
@@ -18,6 +18,7 @@ type userServiceInterface interface {
 	UpdateUser(bool, users.User) (*users.User, *errors.RestErr)
 	DeleteUser(int64) *errors.RestErr
 	SearchUser(string) (users.Users, *errors.RestErr)
+	LoginUser(users.LoginRequest) (*users.User, *errors.RestErr)
 }
 
 func (s *userService) GetUser(userId int64) (*users.User, *errors.RestErr) {
@@ -81,4 +82,15 @@ func (s *userService) DeleteUser(userId int64) *errors.RestErr {
 func (s *userService) SearchUser(status string) (users.Users, *errors.RestErr) {
 	dao := &users.User{}
 	return dao.FindByStatus(status)
+}
+
+func (s *userService) LoginUser(loginRequest users.LoginRequest) (*users.User, *errors.RestErr) {
+	dao := &users.User{
+		Email:    loginRequest.Email,
+		Password: crypto_utils.GetMd5(loginRequest.Password),
+	}
+	if err := dao.FindByEmailAndPassword(); err != nil {
+		return nil, err
+	}
+	return dao, nil
 }

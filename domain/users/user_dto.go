@@ -1,7 +1,7 @@
 package users
 
 import (
-	"github.com/comfysweet/bookstore_users-api/utils/errors"
+	"github.com/comfysweet/bookstore_utils-go/errors"
 	"strings"
 )
 
